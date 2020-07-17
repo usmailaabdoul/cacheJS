@@ -1,0 +1,22 @@
+{
+  "name": "cachejs",
+  "version": "1.0.0",
+  "description": "\"cache built with JS on top of a mongoDB layer\"",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/usmailaabdoul/cacheJS.git"
+  },
+  "keywords": [
+    "cache"
+  ],
+  "author": "usmaila abdoul",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/usmailaabdoul/cacheJS/issues"
+  },
+  "homepage": "https://github.com/usmailaabdoul/cacheJS#readme"
+}
