@@ -18,5 +18,9 @@
   "bugs": {
     "url": "https://github.com/usmailaabdoul/cacheJS/issues"
   },
-  "homepage": "https://github.com/usmailaabdoul/cacheJS#readme"
+  "homepage": "https://github.com/usmailaabdoul/cacheJS#readme",
+  "dependencies": {
+    "js-base64": "^3.2.4",
+    "mongodb": "^3.5.9"
+  }
 }
