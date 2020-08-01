@@ -1,7 +1,3 @@
-var https = require('https');
-const Base64 = require('js-base64').Base64;
-var fs = require('fs')
-// LRU : least recently used
 
 class CacheStore {
   constructor() {
