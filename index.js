@@ -1,100 +1,72 @@
+const mongoose = require('mongoose');
+const axios = require('axios');
 
-class CacheStore {
+mongoose.connect('mongodb://localhost/cache', { useNewUrlParser: true });
+
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function () {
+  console.log('connected')
+});
+
+const schema = new mongoose.Schema({ key: 'string', data: Buffer });
+const Cache = mongoose.model('Cache', schema);
+
+
+class MongooseClient {
   constructor() {
-    this.cacheStorage = [
-      { key: 'homePage', LRU: 2, data: { extension: 'html', value: 'https://www.npmjs.com/package/js-base64' } },
-      { key: 'profileImage', LRU: 3, data: { extension: 'png', value: 'profile.png' } },
-      { key: 'homeImage', LRU: 1, data: { extension: 'jpg', value: 'home.png' } },
-    ];
+    this.Cache = Cache;
   }
 
+  set(key, age) {
+    var cache = new Cache({ key, age })
+    cache.save(function (err) {
+      if (err) return console.log('something unexpected happened', err)
 
-  storeDate(data) {
-    // sort storage to get the LRU 
-    // TODO : perfom sorting on mongoDB data
-    this.cacheStorage.sort((a, b) => {
-      const A = a.LRU;
-      const B = b.LRU;
-      let comparison = 0;
-      if (A > B) {
-        comparison = 1;
-      } else if (A < B) {
-        comparison = -1;
-      }
-
-      return comparison
+      console.log('data was saved successfully');
     })
-
-    // check to make sure the storage is not more than 10 to keep the storage small ideally
-    if (this.cacheStorage.length === 10) {
-      // TODO : perfom data on mongoDB instead
-
-      this.cacheStorage.shift() //removing the least recently used since storage is full
-
-      let dataToBeStore = structureAndStoreDate(data)
-      this.cacheStorage.push(dataToBeStore)
-    } else {
-      let dataToBeStore = structureAndStoreDate(data)
-      this.cacheStorage.push(dataToBeStore)
-    }
-
-    console.log(this.cacheStorage)
   }
 
-  structureAndStoreDate(data) {
-    // extracting name and extension from data
-    let str = data.toString()
-    var file = str.split('/').pop();
-    const dataInfo = { name: file.substr(0, file.lastIndexOf('.')), extension: file.substr(file.lastIndexOf('.') + 1, file.length) }
-
-    // TODO : convert data to base64 and store
-    let encodedData = '';
-    return data = {
-      key: dataInfo.name,
-      LRU: 1,
-      data: {
-        extension: dataInfo.extension,
-        value: encodedData//encoded data
-      },
-    }
-  }
-
-  getData(data) {
-    // extracting name and extension from data
-    let str = data.toString()
-    var file = str.split('/').pop();
-    const dataInfo = { name: file.substr(0, file.lastIndexOf('.')), extension: file.substr(file.lastIndexOf('.') + 1, file.length) }
-
+  get(key) {
     return new Promise((resolve, reject) => {
-      // TODO : get data from mongoDB storage
-      let index = this.cacheStorage.findIndex((c) => c.key === dataInfo.name);
+      Cache.find({ key }, (err, res) => {
+        if (err) {
+          console.log('something unexpected happened', err)
+          return reject(err);
+        }
+        if (res.length === 0) {
+          return reject('this record is empty')
+        }
 
-      if (index > -1) {
-        this.cacheStorage[index].LRU++
-        let data = this.cacheStorage[index];
-        return resolve(data);
-      } else {
-        return reject()
-      }
+        return resolve(res);
+      })
     })
   }
 
 }
 
-const cacheStore = new CacheStore();
+const mongooseClient = new MongooseClient();
 
-// getting data from cacheStorage
-async function getData(data) {
-  try {
-    const dataFromStorage = await cacheStore.getData(data);
-    console.log(dataFromStorage)
-  } catch (e) {
-    console.log('data not found')
-    cacheStore.storeDate(data)
-  }
+function getData(url) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let res = await mongooseClient.get(url);
+      return resolve(res);
+    } catch (e) {
+      console.log(e)
+
+      axios(url)
+        .then(({ data }) => {
+          mongooseClient.set(url, data)
+          return resolve(data);
+        });
+    }
+  })
+
 }
 
-getData('profileImage.png')
+getData('https://jsonplaceholder.typicode.com/posts/1')
+  .then(res => console.log(res))
 
-
-// problems how to get the data to store if the data is not found in the cache storage ??
+// getData('abdoul')
+  // .then(res => console.log(res))
